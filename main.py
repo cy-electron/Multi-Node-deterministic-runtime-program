@@ -137,9 +137,12 @@ def run_stress_proof() -> None:
     results = run_stress_validation()
     valid_results = [result for result in results if result["valid"] is True]
     invalid_results = [result for result in results if result["valid"] is False]
+    invalid_halts = sum(1 for result in invalid_results if result["halted"] is True)
+
     print(f"valid_executions: {len(valid_results)}")
     print(f"invalid_executions: {len(invalid_results)}")
-    print(f"invalid_halts: {sum(1 for result in invalid_results if result['halted'] is True)}")
+    print(f"invalid_halts: {invalid_halts}")
+
     for result in results:
         print(result)
 

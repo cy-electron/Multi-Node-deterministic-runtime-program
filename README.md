@@ -1,25 +1,41 @@
 # Deterministic Runtime Simulation
 
-Small Python implementation for the replay-safe deterministic runtime task.
+This is a small Python project that shows a replay-safe runtime core.
 
-It models one node, applies ordered events through an independent validation
-layer, enforces runtime invariants, records immutable execution history, replays
-the log, verifies every intermediate state hash, and shows deterministic failure
-cases.
+The program keeps an append-only event log, validates every event before it is
+applied, records state hashes, and then proves that the same log can be replayed
+with the same result every time.
+
+Run it with:
 
 ```powershell
 python main.py
 ```
 
-## Files
-
-- `runtime/`: state model, transition rules, executor, errors, and serialization.
-- `events/`: immutable event contract and append-only execution log.
-- `replay/`: replay and replay-verification entry points.
-- `validation/`: identity, sequence, duplicate, node, causal, transition, and invariant checks.
-- `hashing/`: stable JSON/SHA-256 hashing helper.
-- `stress.py`: deterministic valid and invalid execution scenarios.
-- `main.py`: runs execution, replay, immutable-log proof, failure checks, and hash proof.
-- `REVIEW_PACKET.md`: short explanation of the build.
-
 No external packages are needed.
+
+## What It Shows
+
+- Events are immutable after they are created.
+- The execution log only allows appending.
+- Every logged event gets a deterministic sequence number.
+- Invalid events stop execution before state changes.
+- Replay checks every intermediate state hash, not only the final state.
+- Stress cases are deterministic and repeatable.
+
+## Project Layout
+
+- `main.py`: runs the demo and prints the proof output.
+- `events/`: event objects and the append-only execution log.
+- `runtime/`: node state, transitions, execution, and serialization helpers.
+- `validation/`: pre-execution checks and runtime invariant checks.
+- `replay/`: replay and replay verification logic.
+- `hashing/`: stable SHA-256 hashing for canonical state data.
+- `stress.py`: valid and invalid deterministic stress scenarios.
+- `review_packets/`: review notes and evidence for submission.
+
+## Current Scope
+
+This project is intentionally local and simple. It does not include networking,
+databases, APIs, consensus, or distributed runtime behavior. The goal is to keep
+the runtime easy to inspect and easy to replay.

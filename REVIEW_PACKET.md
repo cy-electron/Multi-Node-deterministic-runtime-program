@@ -1,75 +1,87 @@
 # REVIEW_PACKET
 
-## 1. Entry Point
+## Entry Point
 
-Run:
+Run the project from this folder:
 
 ```powershell
 python main.py
 ```
 
-The script builds a deterministic event log, executes it, replays it, tests
-divergence cases, and prints the five-run determinism proof.
+The command prints the event log, original execution, replay result, failure
+cases, determinism proof, and stress validation summary.
 
-## 2. Core Flow
+## Core Flow
 
-1. `NodeState.initial()` creates a node with `IDLE`, version `0`, and event
-   counter `0`.
-2. `ExecutionEvent.create()` creates events from deterministic inputs only.
-3. `apply_event()` checks event identity, node ownership, causal sequence, and
-   transition validity.
-4. `execute_events()` applies the ordered log.
-5. `replay_events()` rebuilds final state from the same immutable event log.
-6. State hashes are generated from canonical JSON with sorted keys.
+1. `ExecutionEvent.create()` builds an event from deterministic inputs.
+2. `ExecutionLog.append()` stores the event and assigns the next sequence number.
+3. `execute_with_trace()` validates the event, applies it, checks invariants, and records the new state hash.
+4. `replay_verified()` runs the same history again and compares every replayed state hash with the original trace.
 
-## 3. Real Execution Example
+If anything is invalid, the runtime raises `RuntimeErrorReason` and stops.
 
-The valid execution is:
+## Critical Files
+
+- `runtime/executor.py`: applies validated events and records state snapshots.
+- `validation/rules.py`: checks identity, sequence, duplicates, causal order, node id, and legal transition.
+- `replay/engine.py`: replays the log and stops on the first mismatch.
+
+## Execution Example
+
+The default valid run has two events:
 
 1. `START` with `causal_id = 1`: `IDLE -> PROCESSING`.
 2. `COMPLETE` with `causal_id = 2`: `PROCESSING -> COMPLETED`.
 
-The original execution hash and replay hash must match exactly.
+The original final hash and replay final hash are the same:
 
-## 4. Failure Cases
+```text
+a64d5a8ab6ceabed3fa828db7d3b79cf7faf4c72dad1a3d662d1ba83d3d0bff4
+```
 
-The script simulates and safely halts on:
+## Replay Example
 
-- Duplicate event: the same `causal_id` is seen twice.
-- Out-of-order event: causal sequence starts at `2` before `1`.
-- Missing event: causal sequence jumps from `1` to `3`.
+Replay uses the immutable log entries and the trace from the original execution.
+The output includes:
 
-Each failure prints a readable reason. No failure is silent.
+```text
+matches_original: True
+```
 
-## 5. Determinism Proof
+## Failure Scenarios
 
-The script replays the same event log five times. Every run must produce the
-same final hash. If any hash differs, `all_hashes_identical` prints `False`.
+The program demonstrates these failures:
 
-## 6. What Was Built
+- duplicate event
+- duplicate causal id
+- out-of-order event
+- missing event
+- illegal transition
+- invalid node
+- tampered timestamp
+- tampered event id
+- replay hash mismatch
 
-A small deterministic runtime coordination model with:
+Each case prints `halted: True` with the reason.
 
-- Node state model.
-- Deterministic event contract.
-- Causal ordering enforcement.
-- Transition validation.
-- Replay engine.
-- Divergence detection.
-- Deterministic hash proof.
+## Determinism Proof
 
-## 7. System Boundaries
+The same event log is replayed five times. Every run gives the same hash:
 
-This is not a quantum computer, network simulator, consensus implementation,
-database, API, UI, async runtime, or AI system. It is intentionally local,
-bounded, inspectable, and deterministic.
+```text
+all_hashes_identical: True
+```
 
-## 8. Known Limitations
+## Invariant Proof
 
-- Single-node execution only.
+The runtime checks that counters and sequence numbers only move forward. It also
+prevents terminal states from moving into invalid states. If an invariant fails,
+execution stops.
+
+## Known Limits
+
+- Single-node runtime only.
 - In-memory event log only.
 - No persistence layer.
-- No distributed transport.
-- No recovery protocol beyond replay.
-- Minimal transition graph by design: `IDLE`, `PROCESSING`, `COMPLETED`,
-  `FAILED`.
+- No network or distributed coordination.
+- No external dependencies.

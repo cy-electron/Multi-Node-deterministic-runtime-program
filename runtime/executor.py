@@ -53,11 +53,7 @@ def execute_with_trace(
         previous_state = state
         event = validate_before_execution(item, state, validation_context)
         state = apply_event(event, state)
-        sequence = (
-            item.sequence
-            if isinstance(item, LoggedEvent)
-            else validation_context.expected_sequence - 1
-        )
+        sequence = sequence_for(item, validation_context)
         validate_invariants(previous_state, state, event, sequence, invariant_context)
         snapshots.append(
             ExecutionSnapshot(
@@ -68,3 +64,12 @@ def execute_with_trace(
             )
         )
     return state, tuple(snapshots)
+
+
+def sequence_for(
+    item: ExecutionEvent | LoggedEvent,
+    context: RuntimeValidationContext,
+) -> int:
+    if isinstance(item, LoggedEvent):
+        return item.sequence
+    return context.expected_sequence - 1

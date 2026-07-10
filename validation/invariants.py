@@ -25,9 +25,19 @@ def validate_invariants(
         raise RuntimeErrorReason("invariant failed: event_counter does not match causal_id")
     if sequence <= context.last_sequence:
         raise RuntimeErrorReason("invariant failed: sequence did not increase")
-    if previous.current_state == NodeStatus.COMPLETED and current.current_state == NodeStatus.PROCESSING:
+
+    completed_reentered_processing = (
+        previous.current_state == NodeStatus.COMPLETED
+        and current.current_state == NodeStatus.PROCESSING
+    )
+    if completed_reentered_processing:
         raise RuntimeErrorReason("invariant failed: completed node re-entered processing")
-    if previous.current_state == NodeStatus.FAILED and current.current_state == NodeStatus.COMPLETED:
+
+    failed_became_completed = (
+        previous.current_state == NodeStatus.FAILED
+        and current.current_state == NodeStatus.COMPLETED
+    )
+    if failed_became_completed:
         raise RuntimeErrorReason("invariant failed: failed node became completed")
 
     context.last_sequence = sequence
