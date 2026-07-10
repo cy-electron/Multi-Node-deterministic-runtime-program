@@ -1,42 +1,21 @@
 from __future__ import annotations
 
-<<<<<<< HEAD
 from events import ExecutionEvent, ExecutionLog
-from replay import replay_events
+from replay import replay_events, replay_verified
 from runtime import Action, NodeState, RuntimeErrorReason
-from runtime.executor import execute_events
+from runtime.executor import ExecutionSnapshot, execute_with_trace
 from runtime.serialization import event_log_as_dicts, state_as_dict
-=======
-from runtime import (
-    Action,
-    ExecutionEvent,
-    NodeState,
-    RuntimeErrorReason,
-    event_log_as_dicts,
-    execute_events,
-    replay_events,
-    state_as_dict,
-)
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
 
 
 NODE_ID = "quantum-runtime-node-01"
 
 
-<<<<<<< HEAD
 def build_valid_event_log() -> ExecutionLog:
     log = ExecutionLog()
     log.append(ExecutionEvent.create(NODE_ID, Action.START, 1))
     log.append(ExecutionEvent.create(NODE_ID, Action.COMPLETE, 2))
     log.seal()
     return log
-=======
-def build_valid_event_log() -> list[ExecutionEvent]:
-    return [
-        ExecutionEvent.create(NODE_ID, Action.START, 1),
-        ExecutionEvent.create(NODE_ID, Action.COMPLETE, 2),
-    ]
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
 
 
 def print_section(title: str) -> None:
@@ -48,30 +27,25 @@ def print_mapping(mapping: dict[str, object]) -> None:
         print(f"{key}: {value}")
 
 
-<<<<<<< HEAD
-def run_original_execution(event_log: ExecutionLog) -> NodeState:
+def run_original_execution(
+    event_log: ExecutionLog,
+) -> tuple[NodeState, tuple[ExecutionSnapshot, ...]]:
     print_section("Original Execution")
-    state = execute_events(NodeState.initial(NODE_ID), event_log.events())
-=======
-def run_original_execution(event_log: list[ExecutionEvent]) -> NodeState:
-    print_section("Original Execution")
-    state = execute_events(NodeState.initial(NODE_ID), event_log)
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
+    state, trace = execute_with_trace(NodeState.initial(NODE_ID), event_log.entries())
     print_mapping(state_as_dict(state))
     print(f"state_hash: {state.hash()}")
-    return state
+    for snapshot in trace:
+        print(f"trace_{snapshot.sequence}_hash: {snapshot.state_hash}")
+    return state, trace
 
 
-<<<<<<< HEAD
-def run_replay(event_log: ExecutionLog | list[ExecutionEvent], original_hash: str) -> NodeState:
+def run_replay(
+    event_log: ExecutionLog,
+    original_hash: str,
+    original_trace: tuple[ExecutionSnapshot, ...],
+) -> NodeState:
     print_section("Replay Proof")
-    events = event_log.events() if isinstance(event_log, ExecutionLog) else event_log
-    replayed = replay_events(events, NODE_ID)
-=======
-def run_replay(event_log: list[ExecutionEvent], original_hash: str) -> NodeState:
-    print_section("Replay Proof")
-    replayed = replay_events(event_log, NODE_ID)
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
+    replayed = replay_verified(event_log.entries(), NODE_ID, original_trace)
     print_mapping(state_as_dict(replayed))
     print(f"replay_hash: {replayed.hash()}")
     print(f"matches_original: {replayed.hash() == original_hash}")
@@ -90,7 +64,6 @@ def run_divergence_case(name: str, event_log: list[ExecutionEvent]) -> None:
     print("reason: divergence was not detected")
 
 
-<<<<<<< HEAD
 def run_immutable_log_proof(event_log: ExecutionLog) -> None:
     print_section("Immutable Log Proof")
     try:
@@ -114,30 +87,45 @@ def run_divergence_tests(valid_log: ExecutionLog) -> None:
     out_of_order = [valid_events[1], valid_events[0]]
     missing = [
         valid_events[0],
-=======
-def run_divergence_tests(valid_log: list[ExecutionEvent]) -> None:
-    duplicate = [valid_log[0], valid_log[0]]
-    out_of_order = [valid_log[1], valid_log[0]]
-    missing = [
-        valid_log[0],
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
         ExecutionEvent.create(NODE_ID, Action.FAIL, 3),
+    ]
+    invalid_node = [
+        ExecutionEvent.create("unexpected-runtime-node", Action.START, 1),
     ]
 
     run_divergence_case("duplicate event", duplicate)
     run_divergence_case("out-of-order event", out_of_order)
     run_divergence_case("missing event", missing)
+    run_divergence_case("invalid node", invalid_node)
 
 
-<<<<<<< HEAD
+def run_replay_mismatch_case(
+    event_log: ExecutionLog,
+    original_trace: tuple[ExecutionSnapshot, ...],
+) -> None:
+    print_section("Replay Verification Mismatch")
+    bad_trace = (
+        ExecutionSnapshot(
+            sequence=original_trace[0].sequence,
+            event_id=original_trace[0].event_id,
+            state_hash="0" * 64,
+            state=original_trace[0].state,
+        ),
+        *original_trace[1:],
+    )
+    try:
+        replay_verified(event_log.entries(), NODE_ID, bad_trace)
+    except RuntimeErrorReason as exc:
+        print("halted: True")
+        print(f"reason: {exc}")
+        return
+    print("halted: False")
+    print("reason: replay mismatch was not detected")
+
+
 def run_determinism_proof(event_log: ExecutionLog) -> None:
     print_section("Determinism Proof")
-    hashes = [replay_events(event_log.events(), NODE_ID).hash() for _ in range(5)]
-=======
-def run_determinism_proof(event_log: list[ExecutionEvent]) -> None:
-    print_section("Determinism Proof")
-    hashes = [replay_events(event_log, NODE_ID).hash() for _ in range(5)]
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
+    hashes = [replay_events(event_log.entries(), NODE_ID).hash() for _ in range(5)]
     for index, hash_value in enumerate(hashes, start=1):
         print(f"run_{index}_hash: {hash_value}")
     print(f"all_hashes_identical: {len(set(hashes)) == 1}")
@@ -150,12 +138,10 @@ def main() -> int:
     for event in event_log_as_dicts(event_log):
         print(event)
 
-<<<<<<< HEAD
     run_immutable_log_proof(event_log)
-=======
->>>>>>> 40bdd748e88a6aa251e04db1024868d220fa9a94
-    final_state = run_original_execution(event_log)
-    run_replay(event_log, final_state.hash())
+    final_state, original_trace = run_original_execution(event_log)
+    run_replay(event_log, final_state.hash(), original_trace)
+    run_replay_mismatch_case(event_log, original_trace)
     run_divergence_tests(event_log)
     run_determinism_proof(event_log)
     return 0

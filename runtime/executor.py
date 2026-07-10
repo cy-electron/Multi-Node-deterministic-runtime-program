@@ -1,31 +1,24 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 from events.event import ExecutionEvent
-from runtime.errors import RuntimeErrorReason
-from runtime.state import Action, NodeState, NodeStatus
-from validation import validate_event_identity
+from events.log import LoggedEvent
+from runtime.state import NodeState
+from runtime.transitions import transition
+from validation import RuntimeValidationContext, validate_before_execution
+
+
+@dataclass(frozen=True)
+class ExecutionSnapshot:
+    sequence: int
+    event_id: str
+    state_hash: str
+    state: NodeState
 
 
 def apply_event(event: ExecutionEvent, state: NodeState) -> NodeState:
-    validate_event_identity(event)
-
-    if event.node_id != state.node_id:
-        raise RuntimeErrorReason(
-            f"event node {event.node_id!r} does not match state node {state.node_id!r}"
-        )
-
-    expected_causal_id = state.event_counter + 1
-    if event.causal_id < expected_causal_id:
-        raise RuntimeErrorReason(
-            f"duplicate causal_id {event.causal_id}; expected {expected_causal_id}"
-        )
-    if event.causal_id > expected_causal_id:
-        raise RuntimeErrorReason(
-            f"skipped causal sequence: received {event.causal_id}, expected {expected_causal_id}"
-        )
-
     next_status = transition(state.current_state, event.action)
     return NodeState(
         node_id=state.node_id,
@@ -35,22 +28,31 @@ def apply_event(event: ExecutionEvent, state: NodeState) -> NodeState:
     )
 
 
-def transition(current: NodeStatus, action: Action) -> NodeStatus:
-    allowed = {
-        (NodeStatus.IDLE, Action.START): NodeStatus.PROCESSING,
-        (NodeStatus.PROCESSING, Action.COMPLETE): NodeStatus.COMPLETED,
-        (NodeStatus.PROCESSING, Action.FAIL): NodeStatus.FAILED,
-    }
-    try:
-        return allowed[(current, action)]
-    except KeyError as exc:
-        raise RuntimeErrorReason(
-            f"invalid transition: {current.value} + {action.value}"
-        ) from exc
+def execute_events(
+    initial_state: NodeState,
+    event_log: Iterable[ExecutionEvent | LoggedEvent],
+) -> NodeState:
+    return execute_with_trace(initial_state, event_log)[0]
 
 
-def execute_events(initial_state: NodeState, event_log: Iterable[ExecutionEvent]) -> NodeState:
+def execute_with_trace(
+    initial_state: NodeState,
+    event_log: Iterable[ExecutionEvent | LoggedEvent],
+) -> tuple[NodeState, tuple[ExecutionSnapshot, ...]]:
     state = initial_state
-    for event in event_log:
+    snapshots: list[ExecutionSnapshot] = []
+    context = RuntimeValidationContext()
+
+    for item in event_log:
+        event = validate_before_execution(item, state, context)
         state = apply_event(event, state)
-    return state
+        sequence = item.sequence if isinstance(item, LoggedEvent) else context.expected_sequence - 1
+        snapshots.append(
+            ExecutionSnapshot(
+                sequence=sequence,
+                event_id=event.event_id,
+                state_hash=state.hash(),
+                state=state,
+            )
+        )
+    return state, tuple(snapshots)
