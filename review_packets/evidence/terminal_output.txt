@@ -1,0 +1,27 @@
+# Terminal Output Evidence
+
+Command:
+
+```powershell
+python main.py
+```
+
+Observed summary:
+
+```text
+post_seal_append_blocked: True
+event_mutation_blocked: True
+matches_original: True
+halted: True
+reason: replay hash mismatch at sequence 1
+all_hashes_identical: True
+valid_executions: 10
+invalid_executions: 11
+invalid_halts: 11
+```
+
+Key final hash:
+
+```text
+a64d5a8ab6ceabed3fa828db7d3b79cf7faf4c72dad1a3d662d1ba83d3d0bff4
+```

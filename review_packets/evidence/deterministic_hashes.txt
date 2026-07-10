@@ -1,0 +1,26 @@
+# Deterministic Hash Evidence
+
+Original final hash:
+
+```text
+a64d5a8ab6ceabed3fa828db7d3b79cf7faf4c72dad1a3d662d1ba83d3d0bff4
+```
+
+Replay final hash:
+
+```text
+a64d5a8ab6ceabed3fa828db7d3b79cf7faf4c72dad1a3d662d1ba83d3d0bff4
+```
+
+Intermediate trace hashes:
+
+```text
+trace_1_hash: 3432b77c44e704d7d5307f648c6e10a79a77d75a9da417cbb76a1759c278115a
+trace_2_hash: a64d5a8ab6ceabed3fa828db7d3b79cf7faf4c72dad1a3d662d1ba83d3d0bff4
+```
+
+Repeated replay proof:
+
+```text
+all_hashes_identical: True
+```

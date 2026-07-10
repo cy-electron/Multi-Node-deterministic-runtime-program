@@ -1,0 +1,12 @@
+# Failure Case Evidence
+
+```text
+duplicate event -> duplicate event_id
+out-of-order event -> skipped causal sequence: received 2, expected 1
+missing event -> skipped causal sequence: received 3, expected 2
+invalid node -> invalid node 'unexpected-runtime-node'; expected 'quantum-runtime-node-01'
+illegal transition -> invalid transition: IDLE + COMPLETE
+replay mismatch -> replay hash mismatch at sequence 1
+timestamp tamper -> non-deterministic timestamp for causal_id 1
+event_id tamper -> event_id mismatch for causal_id 1
+```
