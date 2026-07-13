@@ -1,123 +1,105 @@
-# REVIEW_PACKET
+# Review Packet — Multi-Node Deterministic Runtime Coordination
 
 ## Entry Point
 
-Run this command from the project root:
+`python main.py`
 
-```powershell
-python main.py
-```
+## Backend Entry
 
-It prints the full runtime proof: event log, original execution, replay, failure
-cases, repeated hash proof, and stress validation.
+`main.main()` constructs the original replay-safe event log, runs the
+coordinated four-node demonstration, and exports `artifacts/replay_evidence.json`.
 
-## Core Execution Flow
+## Startup Path
 
-1. A deterministic event is created with `ExecutionEvent.create()`.
-2. The event is added to `ExecutionLog`, which gives it the next sequence number.
-3. `execute_with_trace()` validates the event before changing state.
-4. The runtime applies the transition and checks invariants.
-5. A state hash is stored for that step.
-6. `replay_verified()` replays the same log and compares each stored hash.
-
-The runtime stops as soon as validation, invariants, or replay verification fail.
+`main.py` → `coordination.verify_coordination_replay()` →
+`DeterministicCoordinator.deliver_all()` → `RuntimeNode.accept()` →
+`execute_with_trace()` → validation, transitions, snapshots, hashes.
 
 ## Three Critical Files
 
-- `runtime/executor.py`: runs validated events and records state snapshots.
-- `validation/rules.py`: keeps validation separate from execution.
-- `replay/engine.py`: verifies replay output against the original trace.
+1. `coordination/coordinator.py`: bounded canonical message delivery.
+2. `runtime/node.py`: independent node-owned state/history/replay handling.
+3. `coordination/scenarios.py`: repeatable four-node execution and replay proof.
 
-## Execution Example
+## Runtime Flow
 
-The normal run is small on purpose:
+Immutable messages enter one local coordinator. It rejects unknown nodes,
+duplicates, and capacity overflow, then serially sorts messages by logical
+clock/source/target/ID. Each delivery becomes a target-node event. The target
+replays its complete local history before replacing its state and recording a
+snapshot hash.
 
-1. Sequence `1`: `START`, `causal_id = 1`, `IDLE -> PROCESSING`.
-2. Sequence `2`: `COMPLETE`, `causal_id = 2`, `PROCESSING -> COMPLETED`.
+## Replay Flow
 
-Final state hash:
+Each node replays its immutable local event history and checks every snapshot.
+The coordinator is independently rebuilt from the same messages in reverse
+enqueue order. Delivery records and final coordinated state hash must match.
 
-```text
-a64d5a8ab6ceabed3fa828db7d3b79cf7faf4c72dad1a3d662d1ba83d3d0bff4
+## Coordination Flow
+
+The default ring is alpha→bravo, bravo→charlie, charlie→delta,
+delta→alpha. It is enqueued in a non-canonical order and delivered in logical
+clock order. All four nodes independently reach `PROCESSING`.
+
+## JSON Example
+
+```json
+{
+  "replay_summary": {
+    "delivery_count": 4,
+    "result": "MATCHED"
+  }
+}
 ```
 
-## Replay Example
-
-Replay uses the same immutable log and compares every intermediate state hash.
-The expected result is:
-
-```text
-matches_original: True
-```
-
-## Failure Scenarios
-
-The runtime rejects:
-
-- duplicate events
-- duplicate causal ids
-- out-of-order events
-- missing events
-- illegal transitions
-- invalid nodes
-- tampered timestamps
-- tampered event ids
-- replay hash mismatches
-
-Each failure prints a reason and halts.
-
-## Determinism Proof
-
-The project replays the same log five times. All five runs produce the same
-final hash:
-
-```text
-all_hashes_identical: True
-```
-
-## Invariant Proof
-
-The runtime checks these rules while executing:
-
-- event counters must increase
-- sequence numbers must increase
-- completed nodes cannot go back to processing
-- failed nodes cannot become completed
-
-If any rule is broken, execution stops.
+The complete reproducible export is `artifacts/replay_evidence.json`; the
+evidence capture script copies it into this packet.
 
 ## Files Added
 
-- `.gitignore`
-- `events/`
-- `hashing/`
-- `replay/`
-- `runtime/`
-- `validation/`
-- `stress.py`
-- `review_packets/`
+- `coordination/`, `observability/`, `runtime/node.py`
+- `tests/`, `benchmark.py`, `validation_suite.py`
+- `requirements-dev.txt`, `scripts/run_validation.ps1`
+- `scripts/capture_evidence.ps1`
 
 ## Files Modified
 
-- `main.py`
-- `README.md`
-- `REVIEW_PACKET.md`
+- `main.py`, `README.md`, `.gitignore`, `runtime/__init__.py`
+- `review_packets/REVIEW_PACKET.md`
 
 ## Files Untouched
 
-No networking, database, API, UI, or distributed runtime code was added.
+No network clients, API routes, databases, cloud configuration, consensus
+algorithms, UI code, or quantum algorithms were introduced.
 
-## Known Limits
+## Failure Cases
 
-- Single-node runtime model.
-- In-memory event log.
-- No persistence.
-- No distributed transport.
-- Evidence is text-based because the project runs in the terminal.
+- queue capacity overflow, duplicate message ID, unknown node
+- duplicate/invalid/tampered events, causal gaps, invalid transitions
+- replay snapshot mismatch and coordinated replay history mismatch
 
 ## Evidence Index
 
-- `review_packets/evidence/terminal_output.txt`
-- `review_packets/evidence/deterministic_hashes.txt`
-- `review_packets/evidence/failure_cases.txt`
-- `review_packets/code_packets/critical_files.md`
+- `evidence/terminal_execution.txt`: full runnable-program transcript
+- `evidence/replay_evidence.json`: JSON audit export
+- `evidence/pytest_execution.txt`: pytest result
+- `evidence/coverage_report.txt`: coverage report
+- `evidence/benchmark_output.txt`: repeatability benchmark
+- `evidence/project_structure.txt`: repository tree
+- `evidence/SCREENSHOT_CAPTURE.md`: repeatable screenshot checklist
+
+Run `powershell -ExecutionPolicy Bypass -File scripts/capture_evidence.ps1`
+to refresh every text/JSON artifact before the review. The checklist identifies
+the terminal windows to capture during a live review; screenshots are not
+fabricated by this repository.
+
+## Known Limitations
+
+The model is local, batch-based, in-memory, and serial. History rebuilds are
+easy to audit but not designed for large logs. It proves deterministic
+coordination rather than real distributed fault tolerance.
+
+## Future Work
+
+Add deterministic snapshots, generated-message scheduling, property tests,
+and a versioned replay import format while retaining the local replay oracle.

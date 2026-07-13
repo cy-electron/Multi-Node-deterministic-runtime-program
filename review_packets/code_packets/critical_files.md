@@ -1,19 +1,31 @@
-# Critical Source Files
+# Review-Critical Code Packets
 
-## runtime/executor.py
+## `coordination/coordinator.py`
 
-Purpose: applies events after validation and records execution snapshots.
+- **Purpose:** accepts bounded immutable messages and delivers them in one canonical order.
+- **Reason modified:** adds local multi-node coordination while excluding networking and concurrency.
+- **Integration impact:** every coordinated scenario uses this class; its delivery records feed JSON evidence and replay verification.
 
-Reason for modification: execution needed traceable intermediate hashes and invariant checks while keeping mutation logic small.
+## `runtime/node.py`
 
-## validation/rules.py
+- **Purpose:** owns one node's runtime state, execution history, deterministic state hash, trace, and replay history.
+- **Reason modified:** supplies the independent runtime participant required for coordination.
+- **Integration impact:** the coordinator only changes a target through this history-verified node boundary.
 
-Purpose: validates event identity, sequence, duplicates, causal order, node ownership, and legal transitions before execution.
+## `coordination/scenarios.py`
 
-Reason for modification: validation must remain independent from execution.
+- **Purpose:** defines the four-node ring and verifies reconstruction from reversed enqueue order.
+- **Reason modified:** provides an executable proof of node-to-node communication, ordering, replay safety, and convergence.
+- **Integration impact:** used by the main program, benchmark, tests, and evidence exporter.
 
-## replay/engine.py
+## `observability/reports.py`
 
-Purpose: replays event history and compares every replay snapshot against the original execution trace.
+- **Purpose:** constructs canonical audit logs, timeline, runtime summary, replay report, and replay summary JSON.
+- **Reason modified:** makes deterministic execution reviewable without reading internal objects.
+- **Integration impact:** `main.py` exports the report and the capture script preserves it in this packet.
 
-Reason for modification: replay must stop immediately on the first divergence.
+## `runtime/executor.py`
+
+- **Purpose:** applies validated events and records immutable execution snapshots.
+- **Reason modified:** retained as the core single-node replay primitive used by each independent node.
+- **Integration impact:** a coordinator delivery cannot update node state without this validation/invariant boundary.

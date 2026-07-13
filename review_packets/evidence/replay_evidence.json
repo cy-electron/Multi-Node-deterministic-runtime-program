@@ -1,0 +1,179 @@
+{
+  "execution_audit_log": [
+    {
+      "delivery_index": 1,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 1,
+        "message_id": "b50651684bc194bcb0bfef87b90702efea99154509d723cacd4f7cdc1c2bb05d",
+        "source_node_id": "node-bravo",
+        "target_node_id": "node-charlie"
+      },
+      "state_hash": "cdb8ae5857b72e307813623a82a6bc7d46c7ec068c3cbf6d31913ebe4059b771"
+    },
+    {
+      "delivery_index": 2,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 2,
+        "message_id": "76f57f42aa9ca9ead956fe0db7c3405f9ed8e3502cc7e6aaa22fb52bb73caecc",
+        "source_node_id": "node-delta",
+        "target_node_id": "node-alpha"
+      },
+      "state_hash": "8002ed65e9dc9396b261a407caaa00ba1b20bd9bff6bdfe6022f812080f099cb"
+    },
+    {
+      "delivery_index": 3,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 3,
+        "message_id": "60f7980116c9a453bd9a29806929a43ef6e5f342bc6f485ed2fe805f7d82b6be",
+        "source_node_id": "node-charlie",
+        "target_node_id": "node-delta"
+      },
+      "state_hash": "955fd60253c409da06d05c3cded6f6eb037c56ae9b7f0d6a3637ea389fb706a5"
+    },
+    {
+      "delivery_index": 4,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 4,
+        "message_id": "1e9bd67ef477994ef446c9a1e3794d158b8b73e918530c6ac85acc60e93ae60a",
+        "source_node_id": "node-alpha",
+        "target_node_id": "node-bravo"
+      },
+      "state_hash": "8669a92ccff2f1024fdf7e59d2e7c10d74cf6d7831f214e40c1d9bb065cd97f0"
+    }
+  ],
+  "execution_timeline": [
+    {
+      "delivery_index": 1,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 1,
+        "message_id": "b50651684bc194bcb0bfef87b90702efea99154509d723cacd4f7cdc1c2bb05d",
+        "source_node_id": "node-bravo",
+        "target_node_id": "node-charlie"
+      },
+      "state_hash": "cdb8ae5857b72e307813623a82a6bc7d46c7ec068c3cbf6d31913ebe4059b771"
+    },
+    {
+      "delivery_index": 2,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 2,
+        "message_id": "76f57f42aa9ca9ead956fe0db7c3405f9ed8e3502cc7e6aaa22fb52bb73caecc",
+        "source_node_id": "node-delta",
+        "target_node_id": "node-alpha"
+      },
+      "state_hash": "8002ed65e9dc9396b261a407caaa00ba1b20bd9bff6bdfe6022f812080f099cb"
+    },
+    {
+      "delivery_index": 3,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 3,
+        "message_id": "60f7980116c9a453bd9a29806929a43ef6e5f342bc6f485ed2fe805f7d82b6be",
+        "source_node_id": "node-charlie",
+        "target_node_id": "node-delta"
+      },
+      "state_hash": "955fd60253c409da06d05c3cded6f6eb037c56ae9b7f0d6a3637ea389fb706a5"
+    },
+    {
+      "delivery_index": 4,
+      "message": {
+        "action": "START",
+        "causal_id": 1,
+        "logical_clock": 4,
+        "message_id": "1e9bd67ef477994ef446c9a1e3794d158b8b73e918530c6ac85acc60e93ae60a",
+        "source_node_id": "node-alpha",
+        "target_node_id": "node-bravo"
+      },
+      "state_hash": "8669a92ccff2f1024fdf7e59d2e7c10d74cf6d7831f214e40c1d9bb065cd97f0"
+    }
+  ],
+  "format_version": 1,
+  "replay_report": {
+    "node_replay_hashes": {
+      "node-alpha": "8002ed65e9dc9396b261a407caaa00ba1b20bd9bff6bdfe6022f812080f099cb",
+      "node-bravo": "8669a92ccff2f1024fdf7e59d2e7c10d74cf6d7831f214e40c1d9bb065cd97f0",
+      "node-charlie": "cdb8ae5857b72e307813623a82a6bc7d46c7ec068c3cbf6d31913ebe4059b771",
+      "node-delta": "955fd60253c409da06d05c3cded6f6eb037c56ae9b7f0d6a3637ea389fb706a5"
+    },
+    "verified": true
+  },
+  "replay_summary": {
+    "delivery_count": 4,
+    "final_coordinated_state_hash": "c5fa1553c51bae6d14079738598f630e84cb03bfbf74456023f6a86edb714a20",
+    "result": "MATCHED"
+  },
+  "runtime_summary": {
+    "coordinated_state_hash": "c5fa1553c51bae6d14079738598f630e84cb03bfbf74456023f6a86edb714a20",
+    "node_count": 4,
+    "nodes": {
+      "node-alpha": {
+        "deterministic_state_hash": "8002ed65e9dc9396b261a407caaa00ba1b20bd9bff6bdfe6022f812080f099cb",
+        "execution_history_length": 1,
+        "node_id": "node-alpha",
+        "replay_history": [
+          "8002ed65e9dc9396b261a407caaa00ba1b20bd9bff6bdfe6022f812080f099cb"
+        ],
+        "runtime_state": {
+          "current_state": "PROCESSING",
+          "event_counter": 1,
+          "node_id": "node-alpha",
+          "state_version": 1
+        }
+      },
+      "node-bravo": {
+        "deterministic_state_hash": "8669a92ccff2f1024fdf7e59d2e7c10d74cf6d7831f214e40c1d9bb065cd97f0",
+        "execution_history_length": 1,
+        "node_id": "node-bravo",
+        "replay_history": [
+          "8669a92ccff2f1024fdf7e59d2e7c10d74cf6d7831f214e40c1d9bb065cd97f0"
+        ],
+        "runtime_state": {
+          "current_state": "PROCESSING",
+          "event_counter": 1,
+          "node_id": "node-bravo",
+          "state_version": 1
+        }
+      },
+      "node-charlie": {
+        "deterministic_state_hash": "cdb8ae5857b72e307813623a82a6bc7d46c7ec068c3cbf6d31913ebe4059b771",
+        "execution_history_length": 1,
+        "node_id": "node-charlie",
+        "replay_history": [
+          "cdb8ae5857b72e307813623a82a6bc7d46c7ec068c3cbf6d31913ebe4059b771"
+        ],
+        "runtime_state": {
+          "current_state": "PROCESSING",
+          "event_counter": 1,
+          "node_id": "node-charlie",
+          "state_version": 1
+        }
+      },
+      "node-delta": {
+        "deterministic_state_hash": "955fd60253c409da06d05c3cded6f6eb037c56ae9b7f0d6a3637ea389fb706a5",
+        "execution_history_length": 1,
+        "node_id": "node-delta",
+        "replay_history": [
+          "955fd60253c409da06d05c3cded6f6eb037c56ae9b7f0d6a3637ea389fb706a5"
+        ],
+        "runtime_state": {
+          "current_state": "PROCESSING",
+          "event_counter": 1,
+          "node_id": "node-delta",
+          "state_version": 1
+        }
+      }
+    }
+  }
+}
