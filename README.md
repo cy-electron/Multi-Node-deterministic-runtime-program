@@ -53,6 +53,9 @@ delivery audit                                 event history + state hash
 - `events/`, `validation/`, `replay/`, `hashing/`: the original deterministic
   event-sourcing and replay core.
 
+For a guided, line-by-line explanation of what happens during one run, see
+[docs/WORKING_GUIDE.md](docs/WORKING_GUIDE.md).
+
 ## Coordination Flow
 
 1. `RuntimeMessage.create()` derives an immutable ID from canonical fields.

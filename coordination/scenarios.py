@@ -41,7 +41,10 @@ def execute_coordination(
 def verify_coordination_replay(
     messages: tuple[RuntimeMessage, ...] = build_demo_messages(),
 ) -> CoordinationVerification:
+    # First run: preserve the caller's enqueue order.
     coordinator, original = execute_coordination(messages)
+    # Second run: reverse it on purpose. Canonical delivery must erase this
+    # difference, otherwise coordination depends on accidental arrival order.
     replay_coordinator, replayed = execute_coordination(tuple(reversed(messages)))
 
     original_records = tuple(record.canonical() for record in original.deliveries)

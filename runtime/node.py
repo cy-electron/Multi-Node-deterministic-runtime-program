@@ -26,7 +26,13 @@ class RuntimeNode:
         return self.state.hash()
 
     def accept(self, entry: LoggedEvent) -> ExecutionSnapshot:
-        """Apply one ordered entry by replaying this node's complete history."""
+        """Safely accept one delivery.
+
+        The node does not mutate its state event-by-event in place.  Instead it
+        executes a *candidate* full history from a clean initial state.  If
+        validation succeeds, the candidate becomes the new visible state.  This
+        makes a rejected delivery unable to leave a partially updated node.
+        """
         candidate_history = (*self.execution_history, entry)
         state, trace = execute_with_trace(NodeState.initial(self.node_id), candidate_history)
         self.execution_history.append(entry)
@@ -35,6 +41,8 @@ class RuntimeNode:
         return trace[-1]
 
     def replay(self) -> NodeState:
+        # Compare every replay snapshot with `execution_trace`, not just the
+        # final state.  A matching final hash alone could hide an earlier error.
         replayed = replay_verified(self.execution_history, self.node_id, self.execution_trace)
         replay_hash = replayed.hash()
         self.replay_history.append(replay_hash)

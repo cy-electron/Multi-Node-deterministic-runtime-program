@@ -8,6 +8,8 @@ from coordination.scenarios import CoordinationVerification
 
 def build_replay_evidence(verification: CoordinationVerification) -> dict[str, object]:
     """Return a JSON-safe, deterministic audit of coordinated execution."""
+    # Keep the same canonical records in audit and timeline views.  This avoids
+    # two subtly different sources of truth in the exported review evidence.
     timeline = [record.canonical() for record in verification.result.deliveries]
     return {
         "format_version": 1,

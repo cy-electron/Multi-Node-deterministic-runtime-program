@@ -45,6 +45,8 @@ class DeterministicCoordinator:
         self.delivery_history: list[DeliveryRecord] = []
 
     def enqueue(self, message: RuntimeMessage) -> None:
+        # This is intentionally a local list, not a network queue.  Bounded
+        # input makes the amount of work explicit and repeatable.
         if message.source_node_id not in self.nodes or message.target_node_id not in self.nodes:
             raise RuntimeErrorReason("message references an unknown node")
         if len(self._queue) >= self.max_messages:
@@ -56,8 +58,13 @@ class DeterministicCoordinator:
     def deliver_all(self) -> CoordinationResult:
         if len(self._queue) > self.max_messages:
             raise RuntimeErrorReason("message queue capacity exceeded")
+        # Input arrival order must never affect execution.  This total ordering
+        # key is the coordinator's small, deterministic equivalent of a
+        # scheduler: logical time first, then stable textual tie-breakers.
         for message in sorted(self._queue, key=RuntimeMessage.ordering_key):
             target = self.nodes[message.target_node_id]
+            # Each node owns its own sequence numbers and event history; there
+            # is deliberately no shared global runtime state.
             entry = LoggedEvent(sequence=len(target.execution_history) + 1, event=message.event())
             snapshot = target.accept(entry)
             self.delivery_history.append(
