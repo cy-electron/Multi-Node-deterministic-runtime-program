@@ -1,41 +1,123 @@
-# Deterministic Runtime Simulation
+# Multi-Node Deterministic Runtime Coordination
 
-This is a small Python project that shows a replay-safe runtime core.
+A local, deterministic simulation of coordinated runtime participants. It
+extends the existing replay-safe single-node core with four independent nodes,
+immutable messages, bounded delivery, replay verification, and structured
+evidence. It deliberately contains no networking, APIs, database, consensus
+protocol, cloud dependency, or concurrent execution.
 
-The program keeps an append-only event log, validates every event before it is
-applied, records state hashes, and then proves that the same log can be replayed
-with the same result every time.
-
-Run it with:
+## Run
 
 ```powershell
 python main.py
 ```
 
-No external packages are needed.
+The command prints the original single-node proof, coordinated delivery audit,
+replay result, and stress results. It writes JSON evidence to
+`artifacts/replay_evidence.json`.
 
-## What It Shows
+For validation, install optional development tools and run:
 
-- Events are immutable after they are created.
-- The execution log only allows appending.
-- Every logged event gets a deterministic sequence number.
-- Invalid events stop execution before state changes.
-- Replay checks every intermediate state hash, not only the final state.
-- Stress cases are deterministic and repeatable.
+```powershell
+python -m pip install -r requirements-dev.txt
+powershell -ExecutionPolicy Bypass -File scripts/run_validation.ps1
+```
 
-## Project Layout
+This creates ignored, reproducible outputs under `artifacts/`: a coverage
+report, benchmark result, and execution summary.
 
-- `main.py`: runs the demo and prints the proof output.
-- `events/`: event objects and the append-only execution log.
-- `runtime/`: node state, transitions, execution, and serialization helpers.
-- `validation/`: pre-execution checks and runtime invariant checks.
-- `replay/`: replay and replay verification logic.
-- `hashing/`: stable SHA-256 hashing for canonical state data.
-- `stress.py`: valid and invalid deterministic stress scenarios.
-- `review_packets/`: review notes and evidence for submission.
+## Architecture Overview
 
-## Current Scope
+```text
+immutable RuntimeMessage
+          |
+          v
+DeterministicCoordinator -- canonical order --> independent RuntimeNode (3–5)
+          |                                           |
+          v                                           v
+delivery audit                                 event history + state hash
+          |                                           |
+          +----------------> replay verification <---+
+                                |
+                                v
+                         JSON replay evidence
+```
 
-This project is intentionally local and simple. It does not include networking,
-databases, APIs, consensus, or distributed runtime behavior. The goal is to keep
-the runtime easy to inspect and easy to replay.
+- `runtime/`: immutable runtime state, legal transitions, execution, and
+  `RuntimeNode`, which owns state, execution history, state hash, and replay
+  history.
+- `coordination/`: immutable `RuntimeMessage`, fixed-capacity coordinator, and
+  four-node ring scenario.
+- `observability/`: canonical audit, timeline, summary, replay report, and
+  JSON export.
+- `events/`, `validation/`, `replay/`, `hashing/`: the original deterministic
+  event-sourcing and replay core.
+
+## Coordination Flow
+
+1. `RuntimeMessage.create()` derives an immutable ID from canonical fields.
+2. The coordinator accepts only known nodes and no more than `max_messages`.
+3. It sorts pending messages by `(logical_clock, source, target, message_id)`.
+4. A message becomes a deterministic target-node event and is appended with
+   that node's next local sequence number.
+5. The target node rebuilds from its complete history, records a state hash,
+   and the coordinator records a delivery audit entry.
+
+The included ring submits messages in deliberately non-canonical input order;
+delivery is always logical-clock order. Every node receives `START` exactly
+once and independently reaches `PROCESSING`.
+
+## Execution Flow
+
+For each node event, validation checks the event ID, deterministic timestamp,
+sequence, event uniqueness, node identity, causal order, legal transition, and
+post-transition invariants. The node only updates its visible state after the
+complete candidate history executes successfully.
+
+## Replay Flow
+
+Each node re-executes its immutable history from `NodeState.initial(node_id)`.
+Every resulting snapshot is checked against the original sequence, event ID,
+and hash. The full coordination scenario is then reconstructed from the same
+messages in reverse enqueue order; both delivery records and the coordinated
+state hash must match.
+
+## Design Decisions
+
+- **Local deterministic model:** avoids nondeterminism from transport,
+  clocks, threads, and external storage.
+- **Canonical ordering:** a total ordering key makes arrival/enqueue order
+  irrelevant.
+- **Bounded queue:** a hard capacity fails safely before unbounded work grows.
+- **History-based node update:** rebuilding from history prioritizes replay
+  clarity and atomic state replacement over performance.
+- **Structured evidence:** JSON contains execution audit logs, a timeline,
+  runtime summaries, replay reports, and replay summaries.
+
+## Validation
+
+`tests/` is a pytest suite covering convergence, order independence, immutable
+messages, capacity and unknown-node failures, replay history, and JSON exports.
+`benchmark.py` confirms repeated coordinated executions produce one hash.
+`scripts/run_validation.ps1` produces pytest/coverage/benchmark artifacts and
+an execution summary.
+
+## Known Limitations
+
+- This is a simulation, not a distributed system: no network transport,
+  persistence, failure recovery, clocks, or consensus.
+- The coordinator delivers a finite batch serially; it does not model dynamic
+  message generation during delivery.
+- Nodes replay their complete history for every accepted event, which is
+  intentionally simple but not optimized for long histories.
+- The scenario demonstrates convergence as identical ordered coordinated state,
+  not replicated identical node IDs or state hashes.
+
+## Future Improvements
+
+- Add deterministic snapshots to avoid full history rebuilds.
+- Model scheduled batches and explicit causal dependencies.
+- Add property-based tests for generated bounded message sets.
+- Define a versioned import format for replay evidence.
+- Add a separate, deliberately out-of-scope transport adapter only after the
+  deterministic local model remains fully reproducible.
