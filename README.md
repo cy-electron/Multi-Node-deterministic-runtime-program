@@ -165,3 +165,9 @@ an execution summary.
 - Define a versioned import format for replay evidence.
 - Add a separate, deliberately out-of-scope transport adapter only after the
   deterministic local model remains fully reproducible.
+
+## Verification Evidence
+
+See `review_packets/evidence` for generated artifacts.
+
+Screenshots of the execution are available in `review_packets/Screenshots`.
