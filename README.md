@@ -8,7 +8,6 @@ protocol, cloud dependency, or concurrent execution.
 
 (previously Replay-Safe Runtime and small deterministic runtime simulator)
 
-<<<<<<< HEAD
 A Python implementation of a replay-safe deterministic runtime core demonstrating
 immutable execution logs, deterministic event processing, runtime validation,
 state hashing, and replay verification.
@@ -41,7 +40,7 @@ system temporary folder, so the test suite remains usable on machines where
 the default pytest temp directory is restricted.
 
 ## Architecture Overview
-
+```
 
 immutable RuntimeMessage
           |
@@ -79,7 +78,7 @@ Incoming Event
 ```
 
 ## Current Scope
-```
+
 - `runtime/`: immutable runtime state, legal transitions, execution, and
   `RuntimeNode`, which owns state, execution history, state hash, and replay
   history.
