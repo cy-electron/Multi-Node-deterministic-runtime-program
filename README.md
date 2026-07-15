@@ -17,7 +17,6 @@ this is the updated program (version v2 as per the task) of small-deterministic-
 
 ## Run
 Run it with:
->>>>>>> 3e205ecaa0dff9f3c70a1b6bd56091f41bf19056
 
 ```powershell
 python main.py
@@ -43,8 +42,7 @@ the default pytest temp directory is restricted.
 
 ## Architecture Overview
 
-<<<<<<< HEAD
-```text
+
 immutable RuntimeMessage
           |
           v
@@ -80,10 +78,8 @@ Incoming Event
  Replay Verification
 ```
 
-
 ## Current Scope
->>>>>>> 3e205ecaa0dff9f3c70a1b6bd56091f41bf19056
-
+```
 - `runtime/`: immutable runtime state, legal transitions, execution, and
   `RuntimeNode`, which owns state, execution history, state hash, and replay
   history.
